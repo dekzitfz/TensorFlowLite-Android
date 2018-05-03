@@ -14,12 +14,19 @@
         android:layout_height="0dp"
         android:adjustViewBounds="true" />
 
-    <LinearLayout
+    <RelativeLayout
+        android:gravity="center_horizontal|center_vertical"
         android:layout_weight="0.3"
         android:layout_width="match_parent"
         android:layout_height="0dp">
 
+        <Button
+            android:id="@+id/btn_capture"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:background="@drawable/ic_camera" />
 
-    </LinearLayout>
+
+    </RelativeLayout>
 
 </LinearLayout>

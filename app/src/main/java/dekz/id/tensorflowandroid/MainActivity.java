@@ -7,6 +7,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.wonderkiln.camerakit.CameraKitError;
 import com.wonderkiln.camerakit.CameraKitEvent;
@@ -21,6 +23,7 @@ import java.util.List;
 import io.reactivex.Completable;
 import io.reactivex.CompletableObserver;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.annotations.Nullable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Action;
@@ -36,7 +39,9 @@ public class MainActivity extends AppCompatActivity {
     private CompositeDisposable compositeDisposable;
 
     private CameraView cameraView;
-    private Button btnCapture;
+    private Button btnCapture, btnReCapture;
+    private ImageView imgPreview;
+    private TextView tvResult;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +52,9 @@ public class MainActivity extends AppCompatActivity {
 
         cameraView = findViewById(R.id.camera);
         btnCapture = findViewById(R.id.btn_capture);
+        imgPreview = findViewById(R.id.preview);
+        tvResult = findViewById(R.id.tv_result);
+        btnReCapture = findViewById(R.id.btn_recapture);
 
         cameraView.addCameraKitListener(new CameraKitEventListener() {
             @Override
@@ -64,10 +72,8 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("CameraKitListener", "image captured!");
                 Bitmap bitmap = cameraKitImage.getBitmap();
                 bitmap = Bitmap.createScaledBitmap(bitmap, INPUT_SIZE, INPUT_SIZE, false);
-                //imageViewResult.setImageBitmap(bitmap);
                 final List<Classifier.Recognition> results = classifier.recognizeImage(bitmap);
-                Log.i("RESULTS ----> ", results.toString());
-                //textViewResult.setText(results.toString());
+                showPreview(true, bitmap, generateResults(results));
             }
 
             @Override
@@ -83,6 +89,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        btnReCapture.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showPreview(false,null,null);
+            }
+        });
+
         initTensorFlow().subscribe(new CompletableObserver() {
             @Override
             public void onSubscribe(Disposable d) {
@@ -92,6 +105,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onComplete() {
                 Log.i("initTensorFlow", "complete");
+                showPreview(false,null,null);
             }
 
             @Override
@@ -155,5 +169,34 @@ public class MainActivity extends AppCompatActivity {
                         INPUT_SIZE);
             }
         }).subscribeOn(Schedulers.newThread()).observeOn(AndroidSchedulers.mainThread());
+    }
+
+    private String generateResults(List<Classifier.Recognition> data){
+        String result = "";
+        for(int i=0; i<data.size(); i++){
+            result = result + "\n" + data.get(i).toString();
+        }
+
+        return result;
+    }
+
+    private void showPreview(boolean show, @Nullable Bitmap img, @Nullable String results){
+        if(show){
+            cameraView.setVisibility(View.GONE);
+            btnCapture.setVisibility(View.GONE);
+
+            btnReCapture.setVisibility(View.VISIBLE);
+            imgPreview.setVisibility(View.VISIBLE);
+            imgPreview.setImageBitmap(img);
+            tvResult.setVisibility(View.VISIBLE);
+            tvResult.setText(results);
+        }else{
+            cameraView.setVisibility(View.VISIBLE);
+            btnCapture.setVisibility(View.VISIBLE);
+
+            btnReCapture.setVisibility(View.GONE);
+            imgPreview.setVisibility(View.GONE);
+            tvResult.setVisibility(View.GONE);
+        }
     }
 }
